@@ -61,7 +61,7 @@ const SignIn = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        isAdmin: user.isAdmin
+        
       }
       // Creates our JWT and packages it with our payload to send as a response
       let token = middleware.createToken(payload)
@@ -114,9 +114,97 @@ const CheckSession = async (req, res) => {
   res.send(payload)
 }
 
+const searchUser = async (req, res)=> {
+  try{
+    const users = await User.find({
+      name: req.query.name
+    })
+    res.send({users})
+}catch (error){
+  throw error 
+}
+}
+
+const getUser = async (req, res) =>{
+  try{
+    const user = await User.findById(req.params.id)
+    .select("-password")
+    .populate("followers following", "-password")
+    res.send({user})
+  }catch(error){
+    throw error
+  }
+  }
+
+  const updateUser = async (req, res)=>{
+    try{
+      const {image, name} = req.body
+      await User.findOneAndUpdate({_id:req.user._id},
+        {image, name}
+      )
+      res.send({msg: "Profile has been updated"})
+    } catch (error){
+      throw error
+    }
+  }
+
+  const Follow = async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res.status(404).send({ message: 'User not found' });
+      }
+  
+      // Check if already following
+      if (user.followers.includes(req.user._id)) {
+        return res.status(400).send({ message: 'You are already following this user.' });
+      }
+  
+      user.followers.push(req.user._id);
+      await user.save();
+  
+      // Update the current user's following list
+      await User.findByIdAndUpdate(req.user._id, { $push: { following: req.params.id } });
+  
+      res.send({ message: 'Followed user!' });
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  };
+
+  
+const UnFollow = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    // Check if not following
+    if (!user.followers.includes(req.user._id)) {
+      return res.status(400).send({ message: 'You are not following this user.' });
+    }
+
+    user.followers.pull(req.user._id);
+    await user.save();
+
+    // Update the current user's following list
+    await User.findByIdAndUpdate(req.user._id, { $pull: { following: req.params.id } });
+
+    res.send({ message: 'Unfollowed user!' });
+  } catch (error) {
+    return res.status(500).send({ message: error.message });
+  }
+}
+
 module.exports = {
   Register,
   SignIn,
   UpdatePassword,
-  CheckSession
+  CheckSession,
+  searchUser,
+  getUser,
+  updateUser,
+  Follow,
+  UnFollow
 }
