@@ -22,4 +22,4 @@ const issueSchema = new Schema(
 const Issue = mongoose.model('Issue', issueSchema);
 
 // Export the Issue model
-module.exports = { Issue };
+module.exports = { Issue, issueSchema };
