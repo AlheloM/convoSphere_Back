@@ -7,7 +7,7 @@ const replySchema = new Schema(
     comment: { type: String, required: true },
   },
   { timestamps: true }
-);
+)
 
 // Define the issue schema
 const issueSchema = new Schema(
