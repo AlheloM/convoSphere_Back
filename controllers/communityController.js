@@ -1,5 +1,6 @@
 const { community } = require('../models')
 const nodemailer=require('nodemailer')
+require('dotenv').config()
 
 const GetCommunitys = async (req, res) => {
   try {
@@ -41,7 +42,7 @@ const SendEmail= async (req,res)=>{
 const CreateCommunity = async (req, res) => {
   try {
     const fod = await community.create({ ...req.body })
-    res.send(fod)
+    res.status(201).send(fod)
   } catch (error) {
     throw error
   }
