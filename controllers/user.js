@@ -1,6 +1,26 @@
 const { User } = require('../models')
 const middleware = require('../middleware')
 
+
+// image file  dependincess
+const multer = require('multer');
+const path = require('path'); // Add this line to import the path module
+
+// Set up multer storage (as shown previously)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads/'); // Directory to store uploaded files
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  }
+});
+
+// Initialize multer
+const upload = multer({ storage: storage }).single('profile_picture'); // Expecting a single file upload with field name 'image'
+
+// --------------
+
 const Register = async (req, res) => {
   try {
     // Extracts the necessary fields from the request body
