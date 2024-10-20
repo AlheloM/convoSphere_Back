@@ -8,7 +8,8 @@ const userSchema = new Schema({
   followers: { type: String },
   following: { type: String },
   passwordDigest: { type: String },
-  image: { type: Image }
+  image: { type: String }
 })
 const User = mongoose.model('User', userSchema)
+
 module.exports = User
