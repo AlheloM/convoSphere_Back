@@ -6,6 +6,7 @@ const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS)
 const APP_SECRET = process.env.APP_SECRET
 
 const hashPassword = async (password) => {
+  console.log("HASHING PW: ", password)
   // Accepts a password from the request body
   let hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
   // Creates a hashed password and encrypts it 12 times

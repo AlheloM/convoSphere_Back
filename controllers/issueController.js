@@ -1,15 +1,15 @@
-const {issue}=require('../models')
+const { issue } = require('../models')
 
-const GetIssues=async(req,res)=>{
-  try{
-    const issues=await issue.find({})
+const GetIssues = async (req, res) => {
+  try {
+    const issues = await issue.find({})
     res.send(issues)
-  }catch(error){
+  } catch (error) {
     throw error
   }
 }
 
-const ReplyIssue=async (req, res) => {
+const ReplyIssue = async (req, res) => {
   const { issueId } = req.params
   const { comment } = req.body
 
@@ -33,28 +33,27 @@ const ReplyIssue=async (req, res) => {
   }
 }
 
-const CreateIssue= async (req,res)=>{
-  
-  try{
-    const fod= await issue.create({...req.body})
+const CreateIssue = async (req, res) => {
+  try {
+    const fod = await issue.create({ ...req.body })
     res.send(fod)
-  }catch(error){
+  } catch (error) {
     throw error
   }
 }
 
-const DeleteIssue=async(req,res)=>{
-  try{
-    await issue.deleteOne({_id:req.params.issue_id})
+const DeleteIssue = async (req, res) => {
+  try {
+    await issue.deleteOne({ _id: req.params.issue_id })
     res.send({ msg: 'Post Deleted', payload: req.params.post_id, status: 'Ok' })
   } catch (error) {
     throw error
   }
-  }
+}
 
-  module.exports={
-    GetIssues,
-    CreateIssue,
-    DeleteIssue,
-    ReplyIssue,
-  }
+module.exports = {
+  GetIssues,
+  CreateIssue,
+  DeleteIssue,
+  ReplyIssue
+}

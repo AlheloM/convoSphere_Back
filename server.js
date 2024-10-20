@@ -8,7 +8,8 @@ const db = require('./db'); // Assuming this sets up your database connection
 
 const { Issue } = require('./models/issue');
 const { Community } = require('./models/community'); // Import your new Community model
-
+const auth = require('basic-auth');
+const authRouter = require('./routes/authRouter');
 const app = express();
 
 app.use(cors());
@@ -16,11 +17,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(logger('dev'));
 
+app.use('/auth', authRouter)
+
 // Existing issue routes...
 app.get('/issues', async (req, res) => {
   let issues = await Issue.find({});
   res.send(issues);
 });
+
 
 app.post('/issues', async (req, res) => {
   let newIssue = await Issue.create(req.body);
@@ -67,6 +71,7 @@ app.post('/communities', async (req, res) => {
 });
 
 // Add more routes as necessary...
+
 
 app.listen(PORT, () => {
   console.log(`Express Server Running on Port`, PORT, `. . .`);

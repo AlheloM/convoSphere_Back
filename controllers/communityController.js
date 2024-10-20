@@ -5,6 +5,8 @@ require('dotenv').config()
 const GetCommunitys = async (req, res) => {
   try {
     const communitys = await community.find({})
+    console.log(communitys);
+    
     res.send(communitys)
   } catch (error) {
     throw error
