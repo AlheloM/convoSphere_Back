@@ -1,39 +1,77 @@
-// Load Dependencies
 const express = require('express')
-const mongoose = require('mongoose')
-const session = require('express-session')
 const logger = require('morgan')
 const cors = require('cors')
 
-// Require and Initialize dotenv
-require('dotenv').config()
+const PORT = process.env.PORT || 3001
 
-// PORT Configuration
-const PORT = process.env.PORT
+const db = require('./db') // Assuming this sets up your database connection
 
-// Initialize Express
+const { Issue } = require('./models/issue')
+const { Community } = require('./models/community') // Import your new Community model
+
 const app = express()
 
-// Database Configuration
-const db = require('./config/db')
+app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+app.use(logger('dev'))
 
-app.use(express.urlencoded({ extended: true })) // To parse form data
-app.use(express.json()) // To parse JSON data
+// Existing issue routes...
+app.get('/issues', async (req, res) => {
+  let issues = await Issue.find({})
+  res.send(issues)
+})
 
-// Import Routes
-const commentRouter = require('./routes/commentRouter')
-const communityRouter = require('./routes/communityRouter')
-const sectionRouter = require('./routes/sectionRouter')
-const userRouter = require('./routes/userRouter')
+app.post('/issues', async (req, res) => {
+  let newIssue = await Issue.create(req.body)
+  res.send(newIssue)
+})
 
-// Mount Routes
-app.use('/comment', commentRouter)
-app.use('/community', communityRouter)
+// Route for replying to a specific issue
+app.post('/issues/:issueId/reply', async (req, res) => {
+  const { issueId } = req.params
+  const { comment } = req.body
 
-app.use('/section', sectionRouter)
-app.use('/user', userRouter)
+  try {
+    let issue = await Issue.findById(issueId)
+    if (!issue) {
+      return res.status(404).send({ error: 'Issue not found' })
+    }
 
-// Listen for all HTTP Requests on PORT 4001
+    // Assuming each issue has a `replies` array to store replies
+    issue.replies.push({ comment }) // You can also add other fields like author, timestamp, etc.
+
+    await issue.save() // Save the updated issue document
+
+    res.send({ replies: issue.replies }) // Return updated replies
+  } catch (error) {
+    console.error(error)
+    res
+      .status(500)
+      .send({ error: 'Error replying to issue', details: error.message })
+  }
+})
+
+// New community routes...
+app.get('/communities', async (req, res) => {
+  let communities = await Community.find({})
+  res.send(communities)
+})
+
+app.post('/communities', async (req, res) => {
+  try {
+    let newCommunity = await Community.create(req.body)
+    res.status(201).send(newCommunity) // Return the created community with 201 status
+  } catch (error) {
+    console.error(error)
+    res
+      .status(400)
+      .send({ error: 'Error creating community', details: error.message })
+  }
+})
+
+// Add more routes as necessary...
+
 app.listen(PORT, () => {
-  console.log(`ConvoSphere App is running on PORT ${PORT}`)
+  console.log(`Express Server Running on Port`, PORT, `. . .`)
 })
