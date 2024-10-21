@@ -152,59 +152,99 @@ const updateUser = async (req, res) => {
 
 const Follow = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' })
+    const targetUserId = req.params.id
+    const currentUserId = res.locals.payload.id
+
+    const targetUser = await User.findById(targetUserId)
+    if (!targetUser) {
+      return res.status(404).send({ message: 'Target user not found' })
     }
 
-    // Check if already following
-    if (user.followers.includes(req.user._id)) {
+    const currentUser = await User.findById(currentUserId)
+    if (!currentUser) {
+      return res.status(404).send({ message: 'Current user not found' })
+    }
+
+    if (!targetUser.followers) {
+      targetUser.followers = []
+    }
+    if (!currentUser.following) {
+      currentUser.following = []
+    }
+
+    if (targetUser.followers.includes(currentUserId)) {
       return res
         .status(400)
         .send({ message: 'You are already following this user.' })
     }
 
-    user.followers.push(req.user._id)
-    await user.save()
+    targetUser.followers.push(currentUserId)
+    await targetUser.save()
 
-    // Update the current user's following list
-    await User.findByIdAndUpdate(req.user._id, {
-      $push: { following: req.params.id }
-    })
+    if (!currentUser.following.includes(targetUserId)) {
+      currentUser.following.push(targetUserId)
+    }
+    await currentUser.save()
 
     res.send({ message: 'Followed user!' })
   } catch (error) {
+    console.error(error)
     return res.status(500).send({ message: error.message })
   }
 }
 
 const UnFollow = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' })
+    const targetUserId = req.params.id
+    const currentUserId = res.locals.payload.id
+
+    const targetUser = await User.findById(targetUserId)
+    if (!targetUser) {
+      return res.status(404).send({ message: 'Target user not found' })
     }
 
-    // Check if not following
-    if (!user.followers.includes(req.user._id)) {
-      return res
-        .status(400)
-        .send({ message: 'You are not following this user.' })
+    const currentUser = await User.findById(currentUserId)
+    if (!currentUser) {
+      return res.status(404).send({ message: 'Current user not found' })
     }
 
-    user.followers.pull(req.user._id)
-    await user.save()
+    if (!targetUser.followers) {
+      targetUser.followers = []
+    }
 
-    // Update the current user's following list
-    await User.findByIdAndUpdate(req.user._id, {
-      $pull: { following: req.params.id }
-    })
+    if (!currentUser.following) {
+      currentUser.following = []
+    }
+
+    targetUser.followers.pull(currentUserId)
+    await targetUser.save()
+
+    if (currentUser.following.includes(targetUserId)) {
+      currentUser.following.pull(targetUserId)
+    }
+    await currentUser.save() // Save changes to the current user
 
     res.send({ message: 'Unfollowed user!' })
   } catch (error) {
     return res.status(500).send({ message: error.message })
   }
 }
+const getUserProfile = async (req, res) => {
+  try {
+    const userId = res.locals.payload.id; // Assuming you get the user ID from the token
+    const user = await User.findById(userId).populate('following'); // Populate the following field
+
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    const followedFriends = user.following; // This contains the users being followed
+    res.send(followedFriends);
+  } catch (error) {
+    return res.status(500).send({ message: error.message });
+  }
+};
+
 
 module.exports = {
   Register,
