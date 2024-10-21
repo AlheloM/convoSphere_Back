@@ -3,7 +3,7 @@ const authController = require('../controllers/auth')
 const middleware = require('../middleware')
 
 
-router.post('/signIn', authController.SignIn)
+router.post('/signIn', upload.single('image'), authController.SignIn, authController.SignIn)
 router.post('/register', upload.single('image'), authController.Register)
 router.put(
   '/update/:auth_id',
