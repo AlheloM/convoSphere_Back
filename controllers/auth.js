@@ -24,8 +24,9 @@ upload = multer({ storage: storage }) // Expecting a single file upload with fie
 const Register = async (req, res) => {
   try {
     // Extracts the necessary fields from the request body
-    console.log(req.body)
-    const { email, password, name, image } = req.body
+
+    const { email, password,image, name, isAdmin } = req.body
+
     // Hashes the provided password
     let passwordDigest = await middleware.hashPassword(password)
     // Checks if there has already been a user registered with that email
@@ -37,7 +38,9 @@ const Register = async (req, res) => {
     } else {
       console.log(image)
       // Creates a new user
-      const user = await User.create({ name, email, passwordDigest, image })
+
+      const user = await User.create({ name, email, passwordDigest,image, isAdmin })
+
       // Sends the user as a response
       res.send(user)
     }
