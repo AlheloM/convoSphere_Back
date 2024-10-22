@@ -30,6 +30,9 @@ router.put(
   middleware.verifyToken,
   authController.UpdatePassword
 )
+router.put('/user/:id/follow', middleware.stripToken, middleware.verifyToken, authController.Follow);
+router.put('/user/:id/unfollow',  authController.UnFollow);
+
 router.get(
   '/session',
   middleware.stripToken,

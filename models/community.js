@@ -1,14 +1,6 @@
-const { issueSchema } = require('./issue');
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-
-
-const sectionSchema = new mongoose.Schema({
-  name: {type: String, required: true},
-  description: {type: String, required: true},
-  comments: [issueSchema]
-})
 
 const communitySchema = new mongoose.Schema({
   name: { type: String, required: true },

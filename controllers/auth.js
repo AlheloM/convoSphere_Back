@@ -1,14 +1,31 @@
 const { User } = require('../models')
 const middleware = require('../middleware')
 
+// image file  dependincess
+const multer = require('multer')
+const path = require('path') // Add this line to import the path module
+
+// Set up multer storage (as shown previously)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './public/uploads/') // Directory to store uploaded files
+  },
+  filename: (req, file, cb) => {
+    console.log(file.originalname)
+    cb(null, Date.now() + file.originalname.image) // Unique filename
+  }
+})
+
+// Initialize multer
+upload = multer({ storage: storage }) // Expecting a single file upload with field name 'image'
+
+// --------------
+
 const Register = async (req, res) => {
   try {
     // Extracts the necessary fields from the request body
-    const { email, password, name } = req.body
 
-    console.log(req.file)
-
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined
+    const { email, password,image, name, isAdmin } = req.body
 
     // Hashes the provided password
     let passwordDigest = await middleware.hashPassword(password)
@@ -19,13 +36,11 @@ const Register = async (req, res) => {
         .status(400)
         .send('A user with that email has already been registered!')
     } else {
+      console.log(image)
       // Creates a new user
-      const user = await User.create({
-        name,
-        email,
-        passwordDigest,
-        image: image
-      })
+
+      const user = await User.create({ name, email, passwordDigest,image, isAdmin })
+
       // Sends the user as a response
       res.send(user)
     }
@@ -37,13 +52,14 @@ const Register = async (req, res) => {
 const SignIn = async (req, res) => {
   try {
     // Extracts the necessary fields from the request body
-    const { email, password } = req.body
+    const { email, password, image } = req.body
     // Finds a user by a particular field (in this case, email)
     const user = await User.findOne({ email })
     // Checks if the password matches the stored digest
     let matched = await middleware.comparePassword(
       user.passwordDigest,
-      password
+      password,
+      image
     )
     // If they match, constructs a payload object of values we want on the front end
     if (matched) {
@@ -83,7 +99,8 @@ const UpdatePassword = async (req, res) => {
       })
       let payload = {
         id: user.id,
-        email: user.email
+        email: user.email,
+        image: user.image
       }
       return res.send({ status: 'Password Updated!', user: payload })
     }
@@ -138,59 +155,99 @@ const updateUser = async (req, res) => {
 
 const Follow = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' })
+    const targetUserId = req.params.id
+    const currentUserId = res.locals.payload.id
+
+    const targetUser = await User.findById(targetUserId)
+    if (!targetUser) {
+      return res.status(404).send({ message: 'Target user not found' })
     }
 
-    // Check if already following
-    if (user.followers.includes(req.user._id)) {
+    const currentUser = await User.findById(currentUserId)
+    if (!currentUser) {
+      return res.status(404).send({ message: 'Current user not found' })
+    }
+
+    if (!targetUser.followers) {
+      targetUser.followers = []
+    }
+    if (!currentUser.following) {
+      currentUser.following = []
+    }
+
+    if (targetUser.followers.includes(currentUserId)) {
       return res
         .status(400)
         .send({ message: 'You are already following this user.' })
     }
 
-    user.followers.push(req.user._id)
-    await user.save()
+    targetUser.followers.push(currentUserId)
+    await targetUser.save()
 
-    // Update the current user's following list
-    await User.findByIdAndUpdate(req.user._id, {
-      $push: { following: req.params.id }
-    })
+    if (!currentUser.following.includes(targetUserId)) {
+      currentUser.following.push(targetUserId)
+    }
+    await currentUser.save()
 
     res.send({ message: 'Followed user!' })
   } catch (error) {
+    console.error(error)
     return res.status(500).send({ message: error.message })
   }
 }
 
 const UnFollow = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' })
+    const targetUserId = req.params.id
+    const currentUserId = res.locals.payload.id
+
+    const targetUser = await User.findById(targetUserId)
+    if (!targetUser) {
+      return res.status(404).send({ message: 'Target user not found' })
     }
 
-    // Check if not following
-    if (!user.followers.includes(req.user._id)) {
-      return res
-        .status(400)
-        .send({ message: 'You are not following this user.' })
+    const currentUser = await User.findById(currentUserId)
+    if (!currentUser) {
+      return res.status(404).send({ message: 'Current user not found' })
     }
 
-    user.followers.pull(req.user._id)
-    await user.save()
+    if (!targetUser.followers) {
+      targetUser.followers = []
+    }
 
-    // Update the current user's following list
-    await User.findByIdAndUpdate(req.user._id, {
-      $pull: { following: req.params.id }
-    })
+    if (!currentUser.following) {
+      currentUser.following = []
+    }
+
+    targetUser.followers.pull(currentUserId)
+    await targetUser.save()
+
+    if (currentUser.following.includes(targetUserId)) {
+      currentUser.following.pull(targetUserId)
+    }
+    await currentUser.save() // Save changes to the current user
 
     res.send({ message: 'Unfollowed user!' })
   } catch (error) {
     return res.status(500).send({ message: error.message })
   }
 }
+const getUserProfile = async (req, res) => {
+  try {
+    const userId = res.locals.payload.id; // Assuming you get the user ID from the token
+    const user = await User.findById(userId).populate('following'); // Populate the following field
+
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' })
+    }
+
+    const followedFriends = user.following; // This contains the users being followed
+    res.send(followedFriends);
+  } catch (error) {
+    return res.status(500).send({ message: error.message })
+  }
+};
+
 
 module.exports = {
   Register,
