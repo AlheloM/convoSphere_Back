@@ -200,6 +200,19 @@ const UnFollow = async (req, res) => {
   }
 }
 
+const getFollowing = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate('following', '-password');
+    if (!user) {
+      return sendResponse(res, 404, 'User not found.');
+    }
+    return sendResponse(res, 200, 'Following users retrieved successfully!', user.following);
+  } catch (error) {
+    console.error('Error in getFollowing:', error);
+    return sendResponse(res, 500, 'An error occurred while retrieving following users.');
+  }
+}
+
 module.exports = {
   Register,
   SignIn,
@@ -209,5 +222,6 @@ module.exports = {
   getUser,
   updateUser,
   Follow,
-  UnFollow
+  UnFollow,
+  getFollowing,
 }
