@@ -238,13 +238,13 @@ const getUserProfile = async (req, res) => {
     const user = await User.findById(userId).populate('following'); // Populate the following field
 
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      return res.status(404).send({ message: 'User not found' })
     }
 
     const followedFriends = user.following; // This contains the users being followed
     res.send(followedFriends);
   } catch (error) {
-    return res.status(500).send({ message: error.message });
+    return res.status(500).send({ message: error.message })
   }
 };
 
