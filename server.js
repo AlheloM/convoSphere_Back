@@ -77,7 +77,19 @@ app.post('/communities', async (req, res) => {
   }
 });
 
-// Add more routes as necessary...
+
+app.get('/comments/section/:sectionId', async (req, res) => {
+  const { sectionId } = req.params;
+  try {
+    const issues = await Issue.find({ sectionId });
+    res.json(issues);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 
 
 app.listen(PORT, () => {

@@ -7,13 +7,14 @@ const replySchema = new Schema(
     comment: { type: String, required: true },
   },
   { timestamps: true }
-)
+);
 
 // Define the issue schema
 const issueSchema = new Schema(
   {
     comment: { type: String, required: true },
-    replies: [replySchema], // Ensure this is an array of replySchema
+    sectionId: { type: Schema.Types.ObjectId, ref: 'Section', required: true }, // Add sectionId to link issues to a section
+    replies: [replySchema], // Array of replies using replySchema
   },
   { timestamps: true }
 );
