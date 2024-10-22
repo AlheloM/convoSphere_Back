@@ -113,11 +113,43 @@ const unjoinCommunity = async (req, res) => {
   }
 };
 
+const UpdateCommunity = async (req, res) => {
+  console.log(req.body)
+  try {
+    const { id } = req.params;
+    console.log(`Updating community with ID: ${id}`);
+    
+    // Validate if community ID exists before updating
+    const community = await Community.findByIdAndUpdate(id, req.body, {
+      new: true, // Return the updated document
+      runValidators: true // Ensure any schema validations are applied
+    }).populate('fields');
+
+    // If the community with the given ID does not exist
+    if (!community) {
+      return res.status(404).send({ error: 'Community not found' });
+    }
+
+    // Successfully updated
+    res.status(200).send(community);
+  } catch (error) {
+    console.error(`Error updating community: ${error.message}`);
+    
+    // Send a meaningful error response
+    res.status(500).send({
+      error: 'An error occurred while updating the community',
+      details: error.message
+    });
+  }
+};
+
+
 module.exports = {
   GetCommunitys,
   CreateCommunity,
   DeleteCommunity,
   SendEmail,
   joinCommunity,
-  unjoinCommunity
+  unjoinCommunity,
+  UpdateCommunity
 }
