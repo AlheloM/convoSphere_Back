@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Issue = require('../models/issue'); // Adjust the path if necessary
 const commentController=require('../controllers/commentController')
 
 router.get('/',commentController.GetComments)

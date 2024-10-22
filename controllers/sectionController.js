@@ -1,8 +1,8 @@
-const {Section}=require('../models')
+const {section}=require('../models')
 
 const GetSections=async(req,res)=>{
   try{
-    const sections=await Section.find({})
+    const sections=await section.find({})
     res.send(sections)
   }catch(error){
     throw error
@@ -12,7 +12,7 @@ const GetSections=async(req,res)=>{
 const CreateSection= async (req,res)=>{
   
   try{
-    const fod= await Section.create({...req.body})
+    const fod= await section.create({...req.body})
     res.send(fod)
   }catch(error){
     throw error
@@ -21,7 +21,7 @@ const CreateSection= async (req,res)=>{
 
 const DeleteSection=async(req,res)=>{
   try{
-    await Section.deleteOne({_id:req.params.section_id})
+    await section.deleteOne({_id:req.params.section_id})
     res.send({ msg: 'Post Deleted', payload: req.params.post_id, status: 'Ok' })
   } catch (error) {
     throw error

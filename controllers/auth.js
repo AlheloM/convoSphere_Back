@@ -1,134 +1,102 @@
 const { User } = require('../models')
 const middleware = require('../middleware')
 
-// image file  dependincess
-const multer = require('multer')
-const path = require('path') // Add this line to import the path module
-
-// Set up multer storage (as shown previously)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './public/uploads/') // Directory to store uploaded files
-  },
-  filename: (req, file, cb) => {
-    console.log(file.originalname)
-    cb(null, Date.now() + file.originalname.image) // Unique filename
-  }
-})
-
-// Initialize multer
-upload = multer({ storage: storage }) // Expecting a single file upload with field name 'image'
-
-// --------------
+// Helper function to send standardized responses
+const sendResponse = (res, status, message, data = null) => {
+  return res.status(status).send({ status: status === 200 ? 'Success' : 'Error', message, data });
+}
 
 const Register = async (req, res) => {
   try {
-    // Extracts the necessary fields from the request body
+    console.log("Register request body: ", req.body);
+    const { email, password, name } = req.body;
+    
+    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
-    const { email, password,image, name, isAdmin } = req.body
+    let passwordDigest = await middleware.hashPassword(password);
+    let existingUser = await User.findOne({ email });
 
-    // Hashes the provided password
-    let passwordDigest = await middleware.hashPassword(password)
-    // Checks if there has already been a user registered with that email
-    let existingUser = await User.findOne({ email })
     if (existingUser) {
-      return res
-        .status(400)
-        .send('A user with that email has already been registered!')
-    } else {
-      console.log(image)
-      // Creates a new user
-
-      const user = await User.create({ name, email, passwordDigest,image, isAdmin })
-
-      // Sends the user as a response
-      res.send(user)
+      return sendResponse(res, 400, 'A user with that email has already been registered!');
     }
+
+    const user = await User.create({
+      name,
+      email,
+      passwordDigest,
+      image
+    });
+    return sendResponse(res, 201, 'User registered successfully!', user);
+    
   } catch (error) {
-    throw error
+    console.error('Error in Register:', error);
+    return sendResponse(res, 500, 'An error occurred during registration.');
   }
 }
 
 const SignIn = async (req, res) => {
   try {
-    // Extracts the necessary fields from the request body
-    const { email, password, image } = req.body
-    // Finds a user by a particular field (in this case, email)
-    const user = await User.findOne({ email })
-    // Checks if the password matches the stored digest
-    let matched = await middleware.comparePassword(
-      user.passwordDigest,
-      password,
-      image
-    )
-    // If they match, constructs a payload object of values we want on the front end
-    if (matched) {
-      let payload = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image
-      }
-      // Creates our JWT and packages it with our payload to send as a response
-      let token = middleware.createToken(payload)
-      return res.send({ user: payload, token })
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return sendResponse(res, 401, 'User not found.');
     }
-    res.status(401).send({ status: 'Error', msg: 'Unauthorized' })
+
+    let matched = await middleware.comparePassword(user.passwordDigest, password);
+
+    if (matched) {
+      const payload = { id: user.id, name: user.name, email: user.email, image: user.image };
+      const token = middleware.createToken(payload);
+      return sendResponse(res, 200, 'Login successful!', { user: payload, token });
+    }
+
+    return sendResponse(res, 401, 'Invalid credentials.');
+    
   } catch (error) {
-    console.log(error)
-    res.status(401).send({ status: 'Error', msg: 'An error has occurred!' })
+    console.error('Error in SignIn:', error);
+    return sendResponse(res, 500, 'An error occurred during sign-in.');
   }
 }
 
 const UpdatePassword = async (req, res) => {
   try {
-    // Extracts the necessary fields from the request body
-    const { oldPassword, newPassword } = req.body
-    // Finds a user by a particular field (in this case, the user's id from the URL param)
-    let user = await User.findById(req.params.user_id)
-    // Checks if the password matches the stored digest
-    let matched = await middleware.comparePassword(
-      user.passwordDigest,
-      oldPassword
-    )
-    // If they match, hashes the new password, updates the db with the new digest, then sends the user as a response
-    if (matched) {
-      let passwordDigest = await middleware.hashPassword(newPassword)
-      user = await User.findByIdAndUpdate(req.params.user_id, {
-        passwordDigest
-      })
-      let payload = {
-        id: user.id,
-        email: user.email,
-        image: user.image
-      }
-      return res.send({ status: 'Password Updated!', user: payload })
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.params.user_id);
+
+    if (!user) {
+      return sendResponse(res, 404, 'User not found.');
     }
-    res
-      .status(401)
-      .send({ status: 'Error', msg: 'Old Password did not match!' })
+
+    let matched = await middleware.comparePassword(user.passwordDigest, oldPassword);
+
+    if (matched) {
+      const passwordDigest = await middleware.hashPassword(newPassword);
+      await User.findByIdAndUpdate(req.params.user_id, { passwordDigest });
+      return sendResponse(res, 200, 'Password updated successfully!');
+    }
+
+    return sendResponse(res, 401, 'Old password did not match.');
+    
   } catch (error) {
-    console.log(error)
-    res.status(401).send({
-      status: 'Error',
-      msg: 'An error has occurred updating password!'
-    })
+    console.error('Error in UpdatePassword:', error);
+    return sendResponse(res, 500, 'An error occurred updating password.');
   }
 }
 
-const CheckSession = async (req, res) => {
-  const { payload } = res.locals
-  res.send(payload)
+const CheckSession = (req, res) => {
+  const { payload } = res.locals;
+  return sendResponse(res, 200, 'Session is valid!', payload);
 }
 
 const searchUser = async (req, res) => {
   try {
-    const users = await User.find({
-      name: req.query.name
-    })
-    res.send({ users })
+    const users = await User.find({ name: new RegExp(req.query.name, 'i') }); // Case insensitive search
+    return sendResponse(res, 200, 'Users found!', users);
+    
   } catch (error) {
-    throw error
+    console.error('Error in searchUser:', error);
+    return sendResponse(res, 500, 'An error occurred while searching for users.');
   }
 }
 
@@ -136,118 +104,77 @@ const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password')
-      .populate('followers following', '-password')
-    res.send({ user })
+      .populate('followers following', '-password');
+
+    if (!user) {
+      return sendResponse(res, 404, 'User not found.');
+    }
+
+    return sendResponse(res, 200, 'User retrieved successfully!', user);
+    
   } catch (error) {
-    throw error
+    console.error('Error in getUser:', error);
+    return sendResponse(res, 500, 'An error occurred while retrieving user.');
   }
 }
 
 const updateUser = async (req, res) => {
   try {
-    const { image, name } = req.body
-    await User.findOneAndUpdate({ _id: req.user._id }, { image, name })
-    res.send({ msg: 'Profile has been updated' })
+    const { image, name } = req.body;
+    await User.findByIdAndUpdate(req.user._id, { image, name }, { new: true });
+    return sendResponse(res, 200, 'Profile updated successfully!');
+    
   } catch (error) {
-    throw error
+    console.error('Error in updateUser:', error);
+    return sendResponse(res, 500, 'An error occurred while updating profile.');
   }
 }
 
 const Follow = async (req, res) => {
   try {
-    const targetUserId = req.params.id
-    const currentUserId = res.locals.payload.id
-
-    const targetUser = await User.findById(targetUserId)
-    if (!targetUser) {
-      return res.status(404).send({ message: 'Target user not found' })
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return sendResponse(res, 404, 'User not found.');
     }
 
-    const currentUser = await User.findById(currentUserId)
-    if (!currentUser) {
-      return res.status(404).send({ message: 'Current user not found' })
+    if (user.followers.includes(req.user._id)) {
+      return sendResponse(res, 400, 'You are already following this user.');
     }
 
-    if (!targetUser.followers) {
-      targetUser.followers = []
-    }
-    if (!currentUser.following) {
-      currentUser.following = []
-    }
+    user.followers.push(req.user._id);
+    await user.save();
 
-    if (targetUser.followers.includes(currentUserId)) {
-      return res
-        .status(400)
-        .send({ message: 'You are already following this user.' })
-    }
-
-    targetUser.followers.push(currentUserId)
-    await targetUser.save()
-
-    if (!currentUser.following.includes(targetUserId)) {
-      currentUser.following.push(targetUserId)
-    }
-    await currentUser.save()
-
-    res.send({ message: 'Followed user!' })
+    await User.findByIdAndUpdate(req.user._id, { $push: { following: req.params.id } });
+    return sendResponse(res, 200, 'Followed user successfully!');
+    
   } catch (error) {
-    console.error(error)
-    return res.status(500).send({ message: error.message })
+    console.error('Error in Follow:', error);
+    return sendResponse(res, 500, 'An error occurred while following the user.');
   }
 }
 
 const UnFollow = async (req, res) => {
   try {
-    const targetUserId = req.params.id
-    const currentUserId = res.locals.payload.id
-
-    const targetUser = await User.findById(targetUserId)
-    if (!targetUser) {
-      return res.status(404).send({ message: 'Target user not found' })
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return sendResponse(res, 404, 'User not found.');
     }
 
-    const currentUser = await User.findById(currentUserId)
-    if (!currentUser) {
-      return res.status(404).send({ message: 'Current user not found' })
+    if (!user.followers.includes(req.user._id)) {
+      return sendResponse(res, 400, 'You are not following this user.');
     }
 
-    if (!targetUser.followers) {
-      targetUser.followers = []
-    }
+    user.followers.pull(req.user._id);
+    await user.save();
 
-    if (!currentUser.following) {
-      currentUser.following = []
-    }
-
-    targetUser.followers.pull(currentUserId)
-    await targetUser.save()
-
-    if (currentUser.following.includes(targetUserId)) {
-      currentUser.following.pull(targetUserId)
-    }
-    await currentUser.save() // Save changes to the current user
-
-    res.send({ message: 'Unfollowed user!' })
+    await User.findByIdAndUpdate(req.user._id, { $pull: { following: req.params.id } });
+    return sendResponse(res, 200, 'Unfollowed user successfully!');
+    
   } catch (error) {
-    return res.status(500).send({ message: error.message })
+    console.error('Error in UnFollow:', error);
+    return sendResponse(res, 500, 'An error occurred while unfollowing the user.');
   }
 }
-const getUserProfile = async (req, res) => {
-  try {
-    const userId = res.locals.payload.id; // Assuming you get the user ID from the token
-    const user = await User.findById(userId).populate('following'); // Populate the following field
-
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' })
-    }
-
-    const followedFriends = user.following; // This contains the users being followed
-    res.send(followedFriends);
-  } catch (error) {
-    return res.status(500).send({ message: error.message })
-  }
-};
-
 
 module.exports = {
   Register,
