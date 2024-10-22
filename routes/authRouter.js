@@ -26,6 +26,8 @@ router.post('/signIn', authController.SignIn)
 router.post('/register', upload.single('image'), authController.Register)
 
 
+router.get('/user/:id',
+  authController.getUser);
 
 
 router.put(
