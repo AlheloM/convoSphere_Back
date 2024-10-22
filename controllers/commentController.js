@@ -51,9 +51,21 @@ const DeleteComment=async(req,res)=>{
   }
   }
 
+  const GetCommentsBySection = async (req, res) => {
+    const sectionId = req.params.sectionId;
+    try {
+      console.log(sectionId)
+      const comments = await Comment.find({ sectionId }); // Adjust the query based on your schema
+    } catch (error) {
+      console.error(error);
+    
+    }
+  }
+
   module.exports={
     GetComments,
     CreateComment,
     ReplyComment,
     DeleteComment,
+    GetCommentsBySection,
   }

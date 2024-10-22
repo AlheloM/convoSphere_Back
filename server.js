@@ -10,7 +10,9 @@ const { Issue } = require('./models/issue');
 const { Community } = require('./models/community'); // Import your new Community model
 const auth = require('basic-auth');
 const authRouter = require('./routes/authRouter');
+const Router = require('./routes/authRouter');
 const communityRouter = require('./routes/communityRouter')
+const issueRouter = require('./routes/issueRouter')
 const app = express();
 
 app.use(cors());
@@ -21,6 +23,7 @@ app.use(express.static("public"))
 
 app.use('/auth', authRouter)
 app.use('/community', communityRouter)
+app.use('/issue', issueRouter)
 
 // Existing issue routes...
 app.get('/issues', async (req, res) => {
@@ -30,6 +33,7 @@ app.get('/issues', async (req, res) => {
 
 
 app.post('/issues', async (req, res) => {
+  console.log(req.body)
   let newIssue = await Issue.create(req.body);
   res.send(newIssue);
 });
@@ -72,6 +76,8 @@ app.post('/communities', async (req, res) => {
     res.status(400).send({ error: 'Error creating community', details: error.message });
   }
 });
+
+
 
 // Add more routes as necessary...
 
