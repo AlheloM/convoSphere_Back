@@ -1,30 +1,15 @@
 const { User } = require('../models')
 const middleware = require('../middleware')
 
-
-// image file  dependincess
-const multer = require('multer');
-const path = require('path'); // Add this line to import the path module
-
-// Set up multer storage (as shown previously)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/uploads/'); // Directory to store uploaded files
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-  }
-});
-
-// Initialize multer
-const upload = multer({ storage: storage }).single('profile_picture'); // Expecting a single file upload with field name 'image'
-
-// --------------
-
 const Register = async (req, res) => {
   try {
     // Extracts the necessary fields from the request body
-    const { email, password, name, isAdmin } = req.body
+    const { email, password, name } = req.body
+
+    console.log(req.file)
+
+    const image = req.file ? `/uploads/${req.file.filename}` : undefined
+
     // Hashes the provided password
     let passwordDigest = await middleware.hashPassword(password)
     // Checks if there has already been a user registered with that email
@@ -35,7 +20,12 @@ const Register = async (req, res) => {
         .send('A user with that email has already been registered!')
     } else {
       // Creates a new user
-      const user = await User.create({ name, email, passwordDigest, isAdmin })
+      const user = await User.create({
+        name,
+        email,
+        passwordDigest,
+        image: image
+      })
       // Sends the user as a response
       res.send(user)
     }
@@ -61,7 +51,7 @@ const SignIn = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        
+        image: user.image
       }
       // Creates our JWT and packages it with our payload to send as a response
       let token = middleware.createToken(payload)
@@ -114,86 +104,91 @@ const CheckSession = async (req, res) => {
   res.send(payload)
 }
 
-const searchUser = async (req, res)=> {
-  try{
+const searchUser = async (req, res) => {
+  try {
     const users = await User.find({
       name: req.query.name
     })
-    res.send({users})
-}catch (error){
-  throw error 
-}
-}
-
-const getUser = async (req, res) =>{
-  try{
-    const user = await User.findById(req.params.id)
-    .select("-password")
-    .populate("followers following", "-password")
-    res.send({user})
-  }catch(error){
+    res.send({ users })
+  } catch (error) {
     throw error
   }
+}
+
+const getUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-password')
+      .populate('followers following', '-password')
+    res.send({ user })
+  } catch (error) {
+    throw error
   }
+}
 
-  const updateUser = async (req, res)=>{
-    try{
-      const {image, name} = req.body
-      await User.findOneAndUpdate({_id:req.user._id},
-        {image, name}
-      )
-      res.send({msg: "Profile has been updated"})
-    } catch (error){
-      throw error
-    }
+const updateUser = async (req, res) => {
+  try {
+    const { image, name } = req.body
+    await User.findOneAndUpdate({ _id: req.user._id }, { image, name })
+    res.send({ msg: 'Profile has been updated' })
+  } catch (error) {
+    throw error
   }
+}
 
-  const Follow = async (req, res) => {
-    try {
-      const user = await User.findById(req.params.id);
-      if (!user) {
-        return res.status(404).send({ message: 'User not found' });
-      }
-  
-      // Check if already following
-      if (user.followers.includes(req.user._id)) {
-        return res.status(400).send({ message: 'You are already following this user.' });
-      }
-  
-      user.followers.push(req.user._id);
-      await user.save();
-  
-      // Update the current user's following list
-      await User.findByIdAndUpdate(req.user._id, { $push: { following: req.params.id } });
-  
-      res.send({ message: 'Followed user!' });
-    } catch (error) {
-      return res.status(500).send({ message: error.message });
+const Follow = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' })
     }
-  };
 
-  
+    // Check if already following
+    if (user.followers.includes(req.user._id)) {
+      return res
+        .status(400)
+        .send({ message: 'You are already following this user.' })
+    }
+
+    user.followers.push(req.user._id)
+    await user.save()
+
+    // Update the current user's following list
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: { following: req.params.id }
+    })
+
+    res.send({ message: 'Followed user!' })
+  } catch (error) {
+    return res.status(500).send({ message: error.message })
+  }
+}
+
 const UnFollow = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id)
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      return res.status(404).send({ message: 'User not found' })
     }
 
     // Check if not following
     if (!user.followers.includes(req.user._id)) {
-      return res.status(400).send({ message: 'You are not following this user.' });
+      return res
+        .status(400)
+        .send({ message: 'You are not following this user.' })
     }
 
-    user.followers.pull(req.user._id);
-    await user.save();
+    user.followers.pull(req.user._id)
+    await user.save()
 
     // Update the current user's following list
-    await User.findByIdAndUpdate(req.user._id, { $pull: { following: req.params.id } });
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { following: req.params.id }
+    })
 
-    res.send({ message: 'Unfollowed user!' });
+    res.send({ message: 'Unfollowed user!' })
   } catch (error) {
-    return res.status(500).send({ message: error.message });
+    return res.status(500).send({ message: error.message })
   }
 }
 
