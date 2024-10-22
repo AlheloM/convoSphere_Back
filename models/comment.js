@@ -3,7 +3,7 @@ const {Schema}=mongoose
 
 const commentSchema= new Schema({
   topic:{type:String},
-  content:{type:String}
+  comment:{type:String}
 })
 
 const Comment=mongoose.model('Comment',commentSchema)
