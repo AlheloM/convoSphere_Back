@@ -85,30 +85,33 @@ const joinCommunity = async (req, res) => {
 }
 
 const unjoinCommunity = async (req, res) => {
-  
   try {
-    
-    const comm = await Community.findById(req.params.id) // Await the result
+    const comm = await Community.findById(req.params.id); // Await the result
     if (!comm) {
       return res.status(404).send({ msg: 'Community not found' });
     }
 
-    console.log(req.body.id)
-    console.log(comm.participants.find(req.body.id))
-    if (comm.participants.findById(req.body.id)){
-      console.log("found")
-    comm.participants.pop(req.body.id)
+    console.log(req.body.id); 
+    
+    const userIndex = comm.participants.findIndex(participant => participant.id === req.body.id);
+    
+
+    if (userIndex === -1) {
+      return res.status(404).send({ msg: 'User not found in participants' });
     }
+
+    // Remove the user from participants array
+    comm.participants.splice(userIndex, 1);
 
     // Save the updated community
     await comm.save();
 
-    res.status(200).send({ msg: 'User joined community successfully' })
+    res.status(200).send({ msg: 'User unjoined community successfully' });
   } catch (error) {
-    console.error('Error joining community', error)
-    res.status(500).send({ msg: 'Error joining community' })
+    console.error('Error unjoining community', error);
+    res.status(500).send({ msg: 'Error unjoining community' });
   }
-}
+};
 
 module.exports = {
   GetCommunitys,
