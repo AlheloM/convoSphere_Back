@@ -1,15 +1,12 @@
 const mongoose = require('mongoose');
-const { issue } = require('./issue'); // Ensure this is the correct path
-const { community } = require('./community'); // Ensure this is the correct path
-const { comment } = require('./comment');
-const { section } = require('./section');
-const User = require('./user');
-// const Issue = mongoose.model('Issue', issueSchema); // Create the Issue model
+const { Community } = require('./community'); // Ensure this is the correct path
+const {Comment } = require('./comment');
+const { Section } = require('./section');
+const {User} = require('./user');
 
 module.exports = {
-  issue,
-  comment,
-  section,
-  community,
+  Comment,
+  Section,
+  Community,
   User
 };

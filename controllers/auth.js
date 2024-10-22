@@ -24,7 +24,7 @@ const upload = multer({ storage: storage }).single('profile_picture'); // Expect
 const Register = async (req, res) => {
   try {
     // Extracts the necessary fields from the request body
-    const { email, password, name, isAdmin } = req.body
+    const { email, password,image, name, isAdmin } = req.body
     // Hashes the provided password
     let passwordDigest = await middleware.hashPassword(password)
     // Checks if there has already been a user registered with that email
@@ -35,7 +35,7 @@ const Register = async (req, res) => {
         .send('A user with that email has already been registered!')
     } else {
       // Creates a new user
-      const user = await User.create({ name, email, passwordDigest, isAdmin })
+      const user = await User.create({ name, email, passwordDigest,image, isAdmin })
       // Sends the user as a response
       res.send(user)
     }
