@@ -32,6 +32,7 @@ router.get(
   authController.getFollowing
 )
 
+
 router.get('/user/:id', authController.getUser)
 
 router.put(
