@@ -23,6 +23,7 @@ const upload = multer({ storage: storage })
 // const upload = multer({ dest: './public/uploads' })
 
 router.post('/signIn', authController.SignIn)
+router.get('/users', authController.getUsers)
 router.post('/register', upload.single('image'), authController.Register)
 
 router.get(
