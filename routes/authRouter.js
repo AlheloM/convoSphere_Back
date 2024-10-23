@@ -31,7 +31,11 @@ router.get(
   middleware.verifyToken,
   authController.getFollowing
 )
-
+router.get('/user/me', 
+  middleware.stripToken, 
+  middleware.verifyToken, 
+  authController.getMyUser
+);
 
 router.get('/user/:id', authController.getUser)
 
