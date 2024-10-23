@@ -189,7 +189,7 @@ const Follow = async (req, res) => {
     followUser.following.push(req.params.id);
     await followUser.save();
 
-    return sendResponse(res, 200, 'Followed user successfully!');
+    res.status(200).send({ msg: 'User joined community successfully', user:user, followUser: followUser })
   } catch (error) {
     console.error('Error in Follow:', error);
     return sendResponse(res, 500, 'An error occurred while following the user.');
@@ -216,7 +216,7 @@ const UnFollow = async (req, res) => {
     followUser.following = followUser.following.filter(id => id.toString() !== req.params.id);
     await followUser.save();
 
-    return sendResponse(res, 200, 'Unfollowed user successfully!');
+    res.status(200).send({ msg: 'User joined community successfully', user:user, followUser: followUser })
   } catch (error) {
     console.error('Error in UnFollow:', error);
     return sendResponse(res, 500, 'An error occurred while unfollowing the user.');

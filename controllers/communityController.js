@@ -77,7 +77,7 @@ const joinCommunity = async (req, res) => {
     // Save the updated community
     await comm.save();
 
-    res.status(200).send({ msg: 'User joined community successfully' })
+    res.status(200).send({ msg: 'User joined community successfully', comm:comm })
   } catch (error) {
     console.error('Error joining community', error)
     res.status(500).send({ msg: 'Error joining community' })
@@ -106,7 +106,8 @@ const unjoinCommunity = async (req, res) => {
     // Save the updated community
     await comm.save();
 
-    res.status(200).send({ msg: 'User unjoined community successfully' });
+    await res.status(200).send({ msg: 'User unjoined community successfully', comm: comm});
+    // return comm
   } catch (error) {
     console.error('Error unjoining community', error);
     res.status(500).send({ msg: 'Error unjoining community' });
