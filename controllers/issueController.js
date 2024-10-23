@@ -1,12 +1,14 @@
-const { issue } = require('../models')
+const { Issue } = require('../models')
 
 const GetIssues = async (req, res) => {
   try {
-    const issues = await issue.find({})
+    const issues = await Issue.find({})
     res.send(issues)
   } catch (error) {
     throw error
   }
+
+  
 }
 
 const ReplyIssue = async (req, res) => {
