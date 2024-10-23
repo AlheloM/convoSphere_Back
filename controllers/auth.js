@@ -8,6 +8,19 @@ const sendResponse = (res, status, message, data = null) => {
     .send({ status: status === 200 ? 'Success' : 'Error', message, data })
 }
 
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find({})
+    console.log(users)
+
+    res.send(users)
+  } catch (error) {
+    throw error
+  }
+}
+
+
+
 const Register = async (req, res) => {
   try {
     console.log('Register request body: ', req.body)
@@ -239,6 +252,7 @@ const getFollowing = async (req, res) => {
 
 
 module.exports = {
+  getUsers,
   Register,
   SignIn,
   UpdatePassword,
