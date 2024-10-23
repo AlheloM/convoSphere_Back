@@ -1,0 +1,32 @@
+{
+  "name": "u4_lesson_react_forms",
+  "version": "3.1.0",
+  "description": "In this lesson, we'll get a more thorough look at how to best create and interact with forms in React.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SEI-R-6-21/u2_lesson_react_forms.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SEI-R-6-21/u2_lesson_react_forms/issues"
+  },
+  "homepage": "https://github.com/SEI-R-6-21/u2_lesson_react_forms#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongo": "^0.1.0",
+    "mongoose": "^6.13.3",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15"
+  }
+}
