@@ -8,6 +8,19 @@ const sendResponse = (res, status, message, data = null) => {
     .send({ status: status === 200 ? 'Success' : 'Error', message, data })
 }
 
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find({})
+    console.log(users)
+
+    res.send(users)
+  } catch (error) {
+    throw error
+  }
+}
+
+
+
 const Register = async (req, res) => {
   try {
     console.log('Register request body: ', req.body)
@@ -186,7 +199,9 @@ const Follow = async (req, res) => {
     followUser.following.push(req.params.id)
     await followUser.save()
 
-    return sendResponse(res, 200, 'Followed user successfully!')
+
+    res.status(200).send({ msg: 'User joined community successfully', user:user, followUser: followUser })
+
   } catch (error) {
     console.error('Error in Follow:', error)
     return sendResponse(res, 500, 'An error occurred while following the user.')
@@ -214,7 +229,9 @@ const UnFollow = async (req, res) => {
     )
     await followUser.save()
 
-    return sendResponse(res, 200, 'Unfollowed user successfully!')
+
+    res.status(200).send({ msg: 'User joined community successfully', user:user, followUser: followUser })
+
   } catch (error) {
     console.error('Error in UnFollow:', error)
     return sendResponse(
@@ -241,6 +258,7 @@ const getFollowing = async (req, res) => {
 }
 
 module.exports = {
+  getUsers,
   Register,
   SignIn,
   UpdatePassword,
