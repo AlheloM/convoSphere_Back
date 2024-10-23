@@ -25,9 +25,15 @@ const upload = multer({ storage: storage })
 router.post('/signIn', authController.SignIn)
 router.post('/register', upload.single('image'), authController.Register)
 
+  router.get('/user/me', 
+    middleware.stripToken, 
+    middleware.verifyToken, 
+    authController.getMyUser
+  );
 
 router.get('/user/:id',
   authController.getUser);
+
 
 
 router.put(
@@ -42,5 +48,9 @@ router.get(
   middleware.verifyToken,
   authController.CheckSession
 )
+
+router.put('/user/:id/follow', middleware.stripToken, middleware.verifyToken, authController.Follow);
+
+router.put('/user/:id/unfollow', middleware.stripToken, middleware.verifyToken,  authController.UnFollow);
 
 module.exports = router

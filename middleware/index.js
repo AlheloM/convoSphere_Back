@@ -46,6 +46,9 @@ const stripToken = (req, res, next) => {
   }
 }
 
+
+
+
 const verifyToken = (req, res, next) => {
   const { token } = res.locals
   // Gets the token stored in the request lifecycle state
@@ -55,6 +58,7 @@ const verifyToken = (req, res, next) => {
     if (payload) {
       res.locals.payload = payload // Passes the decoded payload to the next function
       // Calls the next function if the token is valid
+    
       return next()
     }
     res.status(401).send({ status: 'Error', msg: 'Unauthorized' })
@@ -78,11 +82,13 @@ const verifyToken = (req, res, next) => {
 //   }
 // }
 
+
 module.exports = {
   hashPassword,
   comparePassword,
   createToken,
   stripToken,
-  verifyToken,
+  verifyToken
+ 
   // isAdmin
 }
