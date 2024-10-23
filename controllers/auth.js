@@ -211,7 +211,7 @@ const UnFollow = async (req, res) => {
     user.followers.pull(userId);
     await user.save();
 
-   
+  
     const followUser = await User.findById(userId);
     followUser.following = followUser.following.filter(id => id.toString() !== req.params.id);
     await followUser.save();
@@ -226,14 +226,13 @@ const UnFollow = async (req, res) => {
 
 const getFollowing = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('following', '-password');
+    const user = await User.findById(req.params.userId).populate('following', '-password');
     if (!user) {
       return sendResponse(res, 404, 'User not found.');
     }
-    return sendResponse(res, 200, 'Following users retrieved successfully!', user.following);
+    res.status(200).send(user.following);
   } catch (error) {
     console.error('Error in getFollowing:', error);
-    return sendResponse(res, 500, 'An error occurred while retrieving following users.');
   }
 }
 
