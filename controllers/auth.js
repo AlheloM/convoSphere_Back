@@ -135,30 +135,28 @@ const searchUser = async (req, res) => {
 
 const getMyUser = async (req, res) => {
   try {
-    const userId = res.locals.payload.id; 
+    const userId = res.locals.payload.id
     const user = await User.findById(userId)
       .select('-password')
-      .populate('followers following', '-password');
+      .populate('followers following', '-password')
 
     if (!user) {
-      return sendResponse(res, 404, 'User not found.');
+      return sendResponse(res, 404, 'User not found.')
     }
 
-    return sendResponse(res, 200, 'User retrieved successfully!', user);
+    return sendResponse(res, 200, 'User retrieved successfully!', user)
   } catch (error) {
-    console.error('Error in getMyUser:', error);
-    return sendResponse(res, 500, 'An error occurred while retrieving user.');
+    console.error('Error in getMyUser:', error)
+    return sendResponse(res, 500, 'An error occurred while retrieving user.')
   }
-};
-
+}
 
 const getUser = async (req, res) => {
- 
   try {
     const user = await User.findById(req.params.id)
       .select('-password')
       .populate('followers', 'name')
-      .populate('following', 'name');
+      .populate('following', 'name')
 
     if (!user) {
       return sendResponse(res, 404, 'User not found.')
@@ -183,73 +181,81 @@ const updateUser = async (req, res) => {
 }
 
 const Follow = async (req, res) => {
-  const userId = res.locals.payload.id; 
+  const userId = res.locals.payload.id
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id)
     if (!user) {
-      return sendResponse(res, 404, 'User not found.');
+      return sendResponse(res, 404, 'User not found.')
     }
 
     if (user.followers.includes(userId)) {
-      return sendResponse(res, 400, 'You are already following this user.');
+      return sendResponse(res, 400, 'You are already following this user.')
     }
 
-    user.followers.push(userId);
-    await user.save();
+    user.followers.push(userId)
+    await user.save()
 
-    
-    const followUser = await User.findById(userId);
-    followUser.following.push(req.params.id);
-    await followUser.save();
+    const followUser = await User.findById(userId)
+    followUser.following.push(req.params.id)
+    await followUser.save()
+
 
     res.status(200).send({ msg: 'User joined community successfully', user:user, followUser: followUser })
+
   } catch (error) {
-    console.error('Error in Follow:', error);
-    return sendResponse(res, 500, 'An error occurred while following the user.');
+    console.error('Error in Follow:', error)
+    return sendResponse(res, 500, 'An error occurred while following the user.')
   }
 }
 
 const UnFollow = async (req, res) => {
-  const userId = res.locals.payload.id; 
+  const userId = res.locals.payload.id
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id)
     if (!user) {
-      return sendResponse(res, 404, 'User not found.');
+      return sendResponse(res, 404, 'User not found.')
     }
 
     if (!user.followers.includes(userId)) {
-      return sendResponse(res, 400, 'You are not following this user.');
+      return sendResponse(res, 400, 'You are not following this user.')
     }
 
-    user.followers.pull(userId);
-    await user.save();
+    user.followers.pull(userId)
+    await user.save()
 
-   
-    const followUser = await User.findById(userId);
-    followUser.following = followUser.following.filter(id => id.toString() !== req.params.id);
-    await followUser.save();
+    const followUser = await User.findById(userId)
+    followUser.following = followUser.following.filter(
+      (id) => id.toString() !== req.params.id
+    )
+    await followUser.save()
+
 
     res.status(200).send({ msg: 'User joined community successfully', user:user, followUser: followUser })
+
   } catch (error) {
-    console.error('Error in UnFollow:', error);
-    return sendResponse(res, 500, 'An error occurred while unfollowing the user.');
+    console.error('Error in UnFollow:', error)
+    return sendResponse(
+      res,
+      500,
+      'An error occurred while unfollowing the user.'
+    )
   }
 }
-
 
 const getFollowing = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('following', '-password');
+    const user = await User.findById(req.params.userId).populate(
+      'following',
+      '-password'
+    )
     if (!user) {
-      return sendResponse(res, 404, 'User not found.');
+      return sendResponse(res, 404, 'User not found.')
     }
-    return sendResponse(res, 200, 'Following users retrieved successfully!', user.following);
+    res.status(200).send(user.following)
   } catch (error) {
-    console.error('Error in getFollowing:', error);
-    return sendResponse(res, 500, 'An error occurred while retrieving following users.');
+    console.error('Error in getFollowing:', error)
   }
 }
-
 
 module.exports = {
   getUsers,
@@ -265,6 +271,5 @@ module.exports = {
 
   getMyUser,
 
-  getFollowing,
-
+  getFollowing
 }
